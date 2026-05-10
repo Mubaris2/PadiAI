@@ -1,0 +1,47 @@
+:root{
+  --bg:#0b0f14;
+  --panel:#0f1419;
+  --muted:#8b95a4;
+  --fg:#d7e2ec;
+  --accent:#0aa3ff;
+  --border: #111418;
+}
+*{box-sizing:border-box}
+html,body,#root {height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial, sans-serif}
+.app-root{height:100vh;display:flex;flex-direction:column}
+.main-layout{display:flex;height:100vh;width:100vw;border-top:0}
+.pane{height:100%;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.pane.right{border-right:0}
+.left-pane{width:50%;min-width:320px}
+.right-pane{width:50%;min-width:320px}
+.toolbar{height:44px;display:flex;align-items:center;padding:0 10px;background:var(--panel);border-bottom:1px solid var(--border)}
+.toolbar .left{display:flex;gap:8px;align-items:center}
+.toolbar select{background:transparent;color:var(--fg);border:1px solid var(--border);padding:6px;font-size:13px}
+.toolbar button{background:transparent;color:var(--fg);border:1px solid var(--border);padding:6px 8px;cursor:pointer}
+.toolbar .spacer{flex:1}
+.editor-panel{flex:7;display:flex;flex-direction:column;background:var(--panel)}
+.testcase-panel{flex:3;border-top:1px solid var(--border);display:flex;flex-direction:column;background:var(--panel);padding:8px}
+.testcase-grid{display:flex;gap:8px;flex:1}
+.card{background:#0c0f12;border:1px solid var(--border);padding:8px;display:flex;flex-direction:column}
+.card .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.card .content{flex:1;overflow:auto;color:var(--muted);font-family:monospace;font-size:13px}
+.textarea{width:100%;height:100%;background:#071018;color:var(--fg);border:1px solid var(--border);resize:none;padding:8px;font-family:monospace}
+.problem-panel{flex:1;display:flex;flex-direction:column;border-bottom:1px solid var(--border);align-items:center;justify-content:center;background:var(--panel)}
+.problem-empty{display:flex;flex-direction:column;align-items:center;gap:10px}
+.problem-empty .title{font-size:28px;font-weight:700}
+.problem-empty .subtitle{color:var(--muted)}
+.accent-btn{background:transparent;color:var(--accent);border:1px solid rgba(10,163,255,0.12);padding:8px 12px;cursor:pointer}
+.chatbot-panel{flex:1;display:flex;flex-direction:column;background:var(--panel)}
+.chat-history{flex:1;overflow:auto;padding:12px}
+.msg{background:#071018;border:1px solid var(--border);padding:10px;margin-bottom:8px;border-left:3px solid var(--accent);max-width:80%}
+.chat-input{display:flex;gap:8px;padding:8px;border-top:1px solid var(--border)}
+.chat-input input{flex:1;padding:8px;border:1px solid var(--border);background:#071018;color:var(--fg)}
+.drawer-overlay{position:fixed;inset:0;background:rgba(2,6,9,0.6);z-index:50}
+.drawer{position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--panel);z-index:60;transform:translateX(-100%);transition:transform 220ms ease-in-out;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.drawer .header{padding:12px;border-bottom:1px solid var(--border);font-weight:700}
+.drawer .list{flex:1;overflow:auto;padding:8px}
+.drawer .item{padding:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.drawer .footer{padding:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.icon-btn{background:transparent;border:none;color:var(--fg);cursor:pointer}
