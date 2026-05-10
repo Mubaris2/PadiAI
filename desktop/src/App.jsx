@@ -568,7 +568,7 @@ export default function App() {
         id: Date.now() + 1, role: 'assistant', content: `**Hints:**\n${hints.map((h, i) => `${i + 1}. ${h}`).join('\n')}`
       }
       setMessages((prev) => [...prev, assistantMessage])
-      
+
       // We return early since the hint agent handles this locally
       return
     }
@@ -832,7 +832,7 @@ export default function App() {
             <div className="drag-handle vertical" onMouseDown={beginDrag('main-split')} />
             <div className="pane" style={{ width: `calc(${100 - leftWidth}% - 9px)` }}>
               <div className="stack">
-                <div className="stack-item" style={{ height: `${ rightTopHeight }% ` }}>
+                <div className="stack-item" style={{ height: `${rightTopHeight}% ` }}>
                   {workingDir ? (
                     <ProblemPanel
                       problem={problem}
@@ -869,7 +869,7 @@ export default function App() {
 
                 <div className="drag-handle horizontal" onMouseDown={beginDrag('right-split')} />
 
-                <div className="stack-item" style={{ height: `${ 100 - rightTopHeight }% ` }}>
+                <div className="stack-item" style={{ height: `${100 - rightTopHeight}% ` }}>
                   <ChatPanel
                     messages={messages}
                     chatInput={chatInput}
