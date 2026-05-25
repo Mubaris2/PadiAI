@@ -1,102 +1,103 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
-const { spawn } = require('child_process')
+const fs = require('fs')
+const Store = require('electron-store')
 
-let backendProcess = null
-
-function spawnBackend() {
-  try {
-    backendProcess = spawn('uvicorn', ['main:app', '--port', '8000'], {
-      cwd: path.join(__dirname, '..', 'backend'),
-      stdio: 'inherit',
-    })
-    backendProcess.on('exit', (code) => console.log('backend exited', code))
-  } catch (e) {
-    console.error('Failed to spawn backend process', e)
-    backendProcess = null
-  }
-}
+const store = new Store({
+  defaults: {
+    workingDir: null,
+    apiKeys: { grok: null },
+    user: { handle: null },
+    editor: { fontSize: 14, tabSize: 4, wordWrap: false },
+  },
+})
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
+    minWidth: 1100,
+    minHeight: 700,
+    frame: false,
+    titleBarStyle: 'hidden',
+    backgroundColor: '#0d0d0d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
+      nodeIntegration: false,
     },
   })
 
-  const indexPath = path.join(__dirname, '..', 'index.html')
-  const VITE_URL = 'http://localhost:5173'
+  const devUrl = process.env.VITE_DEV_SERVER_URL
+  if (devUrl) {
+    win.loadURL(devUrl)
+    //win.webContents.openDevTools()
+  } else {
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+  }
+}
 
-  // Prefer dev server if available (vite). Fallback to built index.html.
-  win.loadURL(VITE_URL).catch(() => {})
-  // If dev server is not running, load the static html after a short delay
-  setTimeout(() => {
+function registerIPC() {
+  ipcMain.handle('dialog:openDir', async () => {
+    const res = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    return res
+  })
+
+  ipcMain.handle('fs:listProblems', async (event, workingDir) => {
+    if (!workingDir) return []
     try {
-      const current = win.webContents.getURL() || ''
-      if (!current.startsWith('http')) {
-        win.loadFile(indexPath)
-      }
+      const items = await fs.promises.readdir(workingDir, { withFileTypes: true })
+      return items.filter(d => d.isDirectory()).map(d => d.name)
     } catch (e) {
-      try { win.loadFile(indexPath) } catch (err) { win.loadURL('data:text/html,<title>Agentic_CPH</title>') }
+      return []
     }
-  }, 400)
+  })
+
+  ipcMain.handle('fs:readFile', async (event, filePath) => {
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8')
+      return { ok: true, content }
+    } catch (e) {
+      return { ok: false, error: String(e) }
+    }
+  })
+
+  ipcMain.handle('fs:writeFile', async (event, filePath, content) => {
+    try {
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.promises.writeFile(filePath, content, 'utf8')
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: String(e) }
+    }
+  })
+
+  ipcMain.handle('fs:ensureDir', async (event, dirPath) => {
+    try {
+      await fs.promises.mkdir(dirPath, { recursive: true })
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: String(e) }
+    }
+  })
+
+  ipcMain.handle('settings:get', (event, key) => {
+    return store.get(key)
+  })
+
+  ipcMain.handle('settings:set', (event, key, value) => {
+    store.set(key, value)
+    return { ok: true }
+  })
 }
 
 app.whenReady().then(() => {
-  spawnBackend()
+  registerIPC()
   createWindow()
 
-  app.on('activate', function () {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
-})
-
-ipcMain.handle('dialog:openDirectory', async () => {
-  const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
-  const selected = result.filePaths?.[0] ?? null
-  console.log('dialog:openDirectory ->', selected)
-  return selected
-})
-
-const API_BASE = 'http://localhost:8000'
-
-async function forwardJSON(method, url, body) {
-  try {
-    const res = await fetch(`${API_BASE}${url}`, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-    })
-    return await res.json()
-  } catch (e) {
-    console.error('forwardJSON error', e)
-    throw e
-  }
-}
-
-ipcMain.handle('llm:call', async (_, payload) => forwardJSON('POST', '/llm/hint', payload))
-ipcMain.handle('llm:interrupt', async (_, payload) => forwardJSON('POST', '/llm/interrupt', payload))
-
-ipcMain.handle('users:get', async () => forwardJSON('GET', '/users/'))
-ipcMain.handle('users:create', async (_, payload) => forwardJSON('POST', '/users/', payload))
-
-ipcMain.handle('problems:get', async () => forwardJSON('GET', '/problems/'))
-ipcMain.handle('problems:create', async (_, payload) => forwardJSON('POST', '/problems/', payload))
-
-ipcMain.handle('settings:get', async () => forwardJSON('GET', '/settings/'))
-ipcMain.handle('settings:save', async (_, payload) => forwardJSON('POST', '/settings/', payload))
-
-app.on('quit', () => {
-  if (backendProcess) {
-    try {
-      backendProcess.kill()
-    } catch (e) {
-      console.error('Failed to kill backend', e)
-    }
-  }
 })
 
 app.on('window-all-closed', () => {

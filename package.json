@@ -1,24 +1,30 @@
 {
-  "name": "agentic_cph",
+  "name": "padiai",
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
-    "dev:renderer": "vite",
-    "dev:electron": "wait-on http://localhost:5173 && electron .",
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "build": "vite build",
-    "start": "electron ."
+    "dev": "vite",
+    "preview": "vite preview",
+    "start": "electron .",
+    "build": "vite build && electron-builder",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.4.6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "dompurify": "^3.4.5",
+    "electron-store": "^8.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-resizable-panels": "^4.11.2",
+    "uuid": "^14.0.0",
+    "zustand": "^4.4.0"
   },
   "devDependencies": {
-    "concurrently": "^7.6.0",
-    "electron": "^42.0.1",
-    "vite": "^8.0.11",
-    "wait-on": "^7.0.1"
-  }
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^27.0.0",
+    "electron-builder": "^26.8.1",
+    "vite": "^5.0.0"
+  },
+  "postinstall": "electron-builder install-app-deps || true"
 }

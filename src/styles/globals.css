@@ -1,0 +1,119 @@
+:root{
+  /* Palette derived from design language */
+  --bg-base: #0c0e12;
+  --bg-body: radial-gradient(circle at top left, #1e2633 0%, #0c0e12 46%, #090b10 100%);
+  --bg-panel: rgba(16, 19, 26, 0.92);
+  --bg-panel-header: rgba(14, 17, 24, 0.9);
+  --bg-input: #141925;
+  --bg-hover: rgba(30, 41, 59, 0.8);
+  --bg-code: #0b111c;
+  --border: #1f2937;
+  --border-subtle: #2a3547;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-code: #e6eef8;
+  --accent: #38bdf8; /* primary accent (blue) */
+  --accent-dim: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.4);
+  --success: #6ee7b7;
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-border: rgba(16, 185, 129, 0.5);
+  --error: #fca5a5;
+  --error-bg: rgba(239, 68, 68, 0.2);
+  --error-border: rgba(239, 68, 68, 0.5);
+  --warning: #fde68a;
+  --warning-bg: rgba(234, 179, 8, 0.2);
+  --warning-border: rgba(234, 179, 8, 0.5);
+  --primary: #2563eb;
+  --primary-border: #1d4ed8;
+  --font-ui: "IBM Plex Sans", "Fira Sans", system-ui, sans-serif;
+  --font-mono: "Fira Mono", "JetBrains Mono", ui-monospace, monospace;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  /* Backwards compatibility for components using older variables */
+  --bg-primary: var(--bg-base);
+  --bg-secondary: rgba(16,19,26,0.92);
+  --bg-hover-old: var(--bg-hover);
+  --border-accent: var(--accent-border);
+  --text-secondary-old: var(--text-secondary);
+}
+
+html, body, #root { height: 100%; margin:0; }
+body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-ui); }
+
+/* Panels */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.panel-header {
+  background: var(--bg-panel-header);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+}
+.panel-body { padding: 10px; color: var(--text-code); font-size: 13px }
+
+/* Inputs / Buttons */
+input, select, textarea { background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); padding:6px 10px; font-size:12px }
+button { background: rgba(15,23,42,0.6); color: var(--text-primary); border: 1px solid var(--border-subtle); padding:6px 10px; border-radius:8px }
+.btn-primary { background: var(--primary); border: 1px solid var(--primary-border); color: white }
+
+/* Run button mapped from old accent */
+.btn-run { background: var(--primary); border: 1px solid var(--primary-border); color: white }
+
+/* Badges */
+.badge { border-radius: 999px; padding:4px 8px; font-size:11px; border:1px solid var(--border-subtle); color:var(--text-code); background: rgba(15,23,42,0.7); }
+.badge.success { color: var(--success); background: var(--success-bg); border-color: var(--success-border) }
+.badge.error { color: var(--error); background: var(--error-bg); border-color: var(--error-border) }
+.badge.warn { color: var(--warning); background: var(--warning-bg); border-color: var(--warning-border) }
+
+/* Test case chips */
+.chip { border: 1px solid #2a3547; background: #111827; color: var(--text-code); border-radius:10px; padding:6px 8px; font-size:12px }
+.chip.active { border-color: var(--accent); background: var(--accent-dim); color: #e0f2fe }
+
+/* Sidebar */
+.sidebar { background: #0f1522; border-right:1px solid var(--border); box-shadow: 4px 0 24px rgba(0,0,0,0.5); padding:12px }
+.sidebar .footer { background:#0b111c; padding:10px; border-radius:8px }
+.sidebar .problem-item { background: rgba(15,23,42,0.5); border:1px solid #1e293b; border-radius:6px; padding:8px; margin-bottom:6px }
+.problem-id { color: var(--accent) }
+
+/* Monaco and code areas */
+.code-area, textarea { background: var(--bg-code); border:1px solid var(--border-subtle); font-family: var(--font-mono); font-size:12px }
+
+/* Ensure Monaco editor respects theme background */
+.monaco-editor, .monaco-editor .overflow-guard, .monaco-editor .view-lines, .monaco-editor .margin, .monaco-editor .monaco-scrollable-element {
+  background-color: var(--bg-code) !important;
+  color: var(--text-code) !important;
+}
+
+/* Custom scrollbars matching theme */
+*::-webkit-scrollbar { width: 10px; height: 10px }
+*::-webkit-scrollbar-track { background: transparent }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 8px; border: 2px solid transparent }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.07) }
+
+/* Firefox scrollbar */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.04) transparent }
+
+/* Chat bubbles */
+.chat-bubble { border-radius:10px; border:1px solid #2a3547; background: rgba(15,23,42,0.8); padding:8px; font-size:12px }
+.chat-bubble.user { background: rgba(37,99,235,0.25); border-color: rgba(37,99,235,0.5); align-self:flex-end }
+
+/* Resize handles */
+.resize-handle { background: linear-gradient(90deg, #1f2937, #374151, #1f2937); border-radius: 999px; flex-shrink:0; transition: background 0.2s }
+/* .resize-handle:hover, .resize-handle[data-resize-handle-active] { background: linear-gradient(90deg, #2a3f5f, #38bdf8, #2a3f5f) } */
+/* explicit hover gradients per orientation to ensure middle separator shows effect */
+.resize-handle.vertical:hover, .resize-handle.vertical[data-resize-handle-active] { background: linear-gradient(0deg, #2a3f5f, #38bdf8, #2a3f5f) }
+.resize-handle.horizontal:hover, .resize-handle.horizontal[data-resize-handle-active] { background: linear-gradient(90deg, #2a3f5f, #38bdf8, #2a3f5f) }
+.resize-handle.horizontal { height:6px; width:100%; cursor:row-resize; margin:2px 0 }
+.resize-handle.vertical { width:6px; height:100%; cursor:col-resize; margin:0 2px }
+
+/* Utility */
+.flex { display:flex }
+.column { display:flex; flex-direction:column }
