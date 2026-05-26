@@ -1,0 +1,144 @@
+.problem-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.empty-subtext {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.btn-open-folder {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 200ms;
+}
+
+.btn-open-folder:hover {
+  background: #2e7dbf;
+}
+
+.problem-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 0;
+}
+
+.problem-count {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.problems {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.problem-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 200ms;
+  border-left: 4px solid transparent;
+}
+
+.problem-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.problem-item.active {
+  background: rgba(56, 189, 248, 0.1);
+  border-left-color: var(--accent);
+}
+
+.problem-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 50px;
+}
+
+.problem-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.problem-title {
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.problem-rating {
+  padding: 2px 6px;
+  background: rgba(255, 180, 0, 0.2);
+  color: #ffb400;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.problem-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-size: 10px;
+}
+
+.tag {
+  background: rgba(56, 189, 248, 0.15);
+  color: #6496ff;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.tag-more {
+  color: var(--text-muted);
+}
+

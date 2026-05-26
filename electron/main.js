@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const Store = require('electron-store')
@@ -12,14 +13,95 @@ const store = new Store({
   },
 })
 
+let backendProcess = null
+
+function startBackend() {
+  try {
+    const backendPath = path.join(__dirname, '../backend')
+    const venvPython = path.join(__dirname, '../.venv/bin/python')
+    
+    // Check if backend path exists
+    if (!fs.existsSync(backendPath)) {
+      console.error('[backend] path does not exist:', backendPath)
+      return
+    }
+    
+    console.log('[backend] ====== BACKEND STARTUP ======')
+    console.log('[backend] path:', backendPath)
+    console.log('[backend] checking main.py exists...')
+    
+    if (!fs.existsSync(path.join(backendPath, 'main.py'))) {
+      console.error('[backend] main.py not found in', backendPath)
+      return
+    }
+    console.log('[backend] ✓ main.py found')
+    
+    console.log('[backend] checking venv python...')
+    const pythonCmd = fs.existsSync(venvPython) ? venvPython : 'python3'
+    console.log('[backend] using python:', pythonCmd)
+    console.log('[backend] spawning: uvicorn main:app --port 8765 --host 127.0.0.1')
+    
+    backendProcess = spawn(pythonCmd, ['-m', 'uvicorn', 'main:app', '--port', '8765', '--host', '127.0.0.1'], {
+      cwd: backendPath,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: process.platform === 'win32',
+      env: { ...process.env, PYTHONUNBUFFERED: '1' },
+    })
+
+    backendProcess.stdout.on('data', (data) => {
+      const message = data.toString().trim()
+      if (message) console.log('[backend stdout]', message)
+    })
+    
+    backendProcess.stderr.on('data', (data) => {
+      const message = data.toString().trim()
+      if (message) console.error('[backend stderr]', message)
+    })
+    
+    backendProcess.on('error', (err) => {
+      console.error('[backend] spawn error:', err.message)
+      console.error('[backend] code:', err.code)
+      console.error('[backend] errno:', err.errno)
+      console.error('[backend] trying fallback: python -m uvicorn main:app ...')
+      
+      try {
+        backendProcess = spawn('python', ['-m', 'uvicorn', 'main:app', '--port', '8765', '--host', '127.0.0.1'], {
+          cwd: backendPath,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          shell: true,
+          env: { ...process.env, PYTHONUNBUFFERED: '1' },
+        })
+        backendProcess.stdout.on('data', (d) => {
+          const msg = d.toString().trim()
+          if (msg) console.log('[backend stdout]', msg)
+        })
+        backendProcess.stderr.on('data', (d) => {
+          const msg = d.toString().trim()
+          if (msg) console.error('[backend stderr]', msg)
+        })
+      } catch (e2) {
+        console.error('[backend] python fallback failed:', e2.message)
+      }
+    })
+    
+    backendProcess.on('exit', (code, signal) => {
+      console.log('[backend] exited with code:', code, 'signal:', signal)
+    })
+    
+    console.log('[backend] ====== BACKEND STARTED ======')
+  } catch (e) {
+    console.error('[backend] startup exception:', e.message)
+    console.error('[backend] stack:', e.stack)
+  }
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1100,
     minHeight: 700,
-    frame: false,
-    titleBarStyle: 'hidden',
+    autoHideMenuBar: true,
     backgroundColor: '#0d0d0d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -31,7 +113,7 @@ function createWindow() {
   const devUrl = process.env.VITE_DEV_SERVER_URL
   if (devUrl) {
     win.loadURL(devUrl)
-    //win.webContents.openDevTools()
+    win.webContents.openDevTools()
   } else {
     win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }
@@ -39,15 +121,37 @@ function createWindow() {
 
 function registerIPC() {
   ipcMain.handle('dialog:openDir', async () => {
-    const res = await dialog.showOpenDialog({ properties: ['openDirectory'] })
-    return res
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Select Working Directory',
+    })
+    if (result.canceled || !result.filePaths.length) return null
+    return result.filePaths[0]
   })
 
-  ipcMain.handle('fs:listProblems', async (event, workingDir) => {
-    if (!workingDir) return []
+  ipcMain.handle('fs:listProblems', async (event, dirPath) => {
+    if (!dirPath) return []
     try {
-      const items = await fs.promises.readdir(workingDir, { withFileTypes: true })
-      return items.filter(d => d.isDirectory()).map(d => d.name)
+      const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+      const problems = []
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue
+        const metaPath = path.join(dirPath, entry.name, 'problem.json')
+        try {
+          const raw = await fs.promises.readFile(metaPath, 'utf-8')
+          const meta = JSON.parse(raw)
+          problems.push({
+            folder: entry.name,
+            id: meta.id,
+            title: meta.title,
+            rating: meta.rating,
+            tags: meta.tags,
+          })
+        } catch {
+          // folder exists but no problem.json yet, skip
+        }
+      }
+      return problems
     } catch (e) {
       return []
     }
@@ -89,9 +193,19 @@ function registerIPC() {
     store.set(key, value)
     return { ok: true }
   })
+
+  ipcMain.handle('shell:openExternal', async (event, url) => {
+    try {
+      await shell.openExternal(url)
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: String(e) }
+    }
+  })
 }
 
 app.whenReady().then(() => {
+  startBackend()
   registerIPC()
   createWindow()
 
@@ -102,4 +216,10 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  if (backendProcess) {
+    backendProcess.kill()
+  }
 })

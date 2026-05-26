@@ -8,6 +8,7 @@ const channels = [
   'fs:ensureDir',
   'settings:get',
   'settings:set',
+  'shell:openExternal',
 ]
 
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args)
@@ -26,4 +27,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ensureDir: (dirPath) => invoke('fs:ensureDir', dirPath),
   settingsGet: (key) => invoke('settings:get', key),
   settingsSet: (key, value) => invoke('settings:set', key, value),
+  openExternal: (url) => invoke('shell:openExternal', url),
 })
+
