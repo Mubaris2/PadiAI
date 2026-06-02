@@ -23,11 +23,21 @@
   },
   "devDependencies": {
     "@electron/get": "^5.0.0",
-    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "electron": "^42.2.0",
     "electron-builder": "^26.8.1",
     "extract-zip": "^2.0.1",
     "vite": "^8.0.14"
+  },
+  "build": {
+    "files": [
+      "!.venv",
+      "!node_modules/.cache",
+      "dist/**/*",
+      "electron/**/*",
+      "backend/**/*",
+      "package.json"
+    ]
   },
   "postinstall": "electron-builder install-app-deps || true"
 }

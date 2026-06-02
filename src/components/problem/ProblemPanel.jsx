@@ -3,12 +3,15 @@ import DOMPurify from 'dompurify'
 import EmptyProblemState from './EmptyProblemState'
 import ProblemSection from './ProblemSection'
 import useAppStore from '../../store/useAppStore'
+import useEditorStore from '../../store/useEditorStore'
+import { parseConstraints } from '../../utils/parseConstraints'
 import './ProblemPanel.css'
 
 export default function ProblemPanel() {
   const workingDir = useAppStore(s => s.workingDir)
   const selectedProblem = useAppStore(s => s.selectedProblem)
   const [problemData, setProblemData] = useState(null)
+  const setLimits = useEditorStore(s => s.setLimits)
 
   const openExternal = async (url) => {
     if (window.electronAPI) {
@@ -33,11 +36,15 @@ export default function ProblemPanel() {
           if (parsed[k]) parsed[k] = DOMPurify.sanitize(parsed[k])
         })
         setProblemData(parsed)
+        if (parsed.constraints) {
+           const { timeLimit, memoryLimit } = parseConstraints(parsed.constraints)
+           setLimits(timeLimit, memoryLimit)
+        }
       } catch (e) {
         console.warn('failed parse problem.json', e)
       }
     })
-  }, [workingDir, selectedProblem])
+  }, [workingDir, selectedProblem, setLimits])
 
   const renderPlaceholder = () => (
     <div className="placeholder-content">

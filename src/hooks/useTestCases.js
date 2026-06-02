@@ -1,15 +1,35 @@
-import { useState } from 'react'
+import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 
-// Lightweight local hook; in a fuller app this would be a store
-export default function useTestCases() {
-  const [cases, setCases] = useState([{
+const useTestCases = create((set) => ({
+  cases: [{
     id: uuidv4(), label: 'Example 1', input: '', expectedOutput: '', result: null
-  }])
+  }],
+  isRunning: false,
+  compilationError: null,
+  activeTab: null, // will hold the id of active tab
 
-  const addCase = () => setCases(c => [...c, { id: uuidv4(), label: `Case ${c.length+1}`, input: '', expectedOutput: '', result: null }])
-  const updateCase = (id, patch) => setCases(c => c.map(x => x.id === id ? {...x, ...patch} : x))
-  const deleteCase = (id) => setCases(c => c.length>1 ? c.filter(x => x.id !== id) : c)
+  setActiveTab: (tabId) => set({ activeTab: tabId }),
+  setCases: (newCases) => set({ cases: newCases }),
+  addCase: () => set(state => ({
+    cases: [...state.cases, { id: uuidv4(), label: `Case ${state.cases.length+1}`, input: '', expectedOutput: '', result: null }]
+  })),
+  updateCase: (id, patch) => set(state => ({
+    cases: state.cases.map(x => x.id === id ? {...x, ...patch} : x)
+  })),
+  deleteCase: (id) => set(state => ({
+    cases: state.cases.length > 1 ? state.cases.filter(x => x.id !== id) : state.cases
+  })),
+  
+  setRunning: (v) => set({ isRunning: v }),
+  setCompilationError: (err) => set({ compilationError: err, activeTab: 'compile' }),
+  updateResult: (id, result) => set(state => ({
+    cases: state.cases.map(tc => tc.id === id ? { ...tc, result } : tc)
+  })),
+  clearResults: () => set(state => ({
+    cases: state.cases.map(tc => ({ ...tc, result: null })),
+    compilationError: null,
+  })),
+}))
 
-  return { cases, addCase, updateCase, deleteCase }
-}
+export default useTestCases

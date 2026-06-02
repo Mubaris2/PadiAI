@@ -110,7 +110,7 @@ function createWindow() {
     },
   })
 
-  const devUrl = process.env.VITE_DEV_SERVER_URL
+  const devUrl = process.env.VITE_DEV_SERVER_URL || (!app.isPackaged ? 'http://localhost:5173' : null)
   if (devUrl) {
     win.loadURL(devUrl)
     win.webContents.openDevTools()
