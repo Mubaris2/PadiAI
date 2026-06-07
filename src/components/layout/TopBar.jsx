@@ -9,6 +9,7 @@ export default function TopBar({ onToggleSidebar }) {
   const backendReady = useAppStore(s => s.backendReady)
   const setBackendReady = useAppStore(s => s.setBackendReady)
   const initWorkingDir = useAppStore(s => s.initWorkingDir)
+  const initApiKeys = useAppStore(s => s.initApiKeys)
   const setWorkingDir = useAppStore(s => s.setWorkingDir)
   const BACKEND_URL = 'http://127.0.0.1:8765'
 
@@ -26,9 +27,10 @@ export default function TopBar({ onToggleSidebar }) {
     }
   }, [setBackendReady])
 
-  // Initialize working dir and check backend health
+  // Initialize working dir, API keys, and check backend health
   useEffect(() => {
     initWorkingDir()
+    initApiKeys()
     
     let intervalId
     // Give backend time to start (2 seconds), then start polling every 1 second
@@ -41,7 +43,7 @@ export default function TopBar({ onToggleSidebar }) {
       clearTimeout(startupTimer)
       if (intervalId) clearInterval(intervalId)
     }
-  }, [initWorkingDir, checkBackendHealth])
+  }, [initWorkingDir, initApiKeys, checkBackendHealth])
 
   const handleSelectDir = async () => {
     try {

@@ -2,7 +2,20 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 const Store = require('electron-store')
+
+function writePadiConfig(data) {
+  const configDir = path.join(os.homedir(), '.padiai');
+  const configPath = path.join(configDir, 'config.json');
+  if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+  
+  let existing = {};
+  try { existing = JSON.parse(fs.readFileSync(configPath, 'utf-8')); } catch {}
+  
+  const updated = { ...existing, ...data };
+  fs.writeFileSync(configPath, JSON.stringify(updated, null, 2));
+}
 
 const store = new Store({
   defaults: {
@@ -191,6 +204,15 @@ function registerIPC() {
 
   ipcMain.handle('settings:set', (event, key, value) => {
     store.set(key, value)
+    
+    if (key === 'workingDir') {
+      writePadiConfig({ workingDir: value })
+    } else if (key === 'apiKeys.grok') {
+      writePadiConfig({ grokApiKey: value })
+    } else if (key === 'apiKeys' && value && value.grok !== undefined) {
+      writePadiConfig({ grokApiKey: value.grok })
+    }
+    
     return { ok: true }
   })
 

@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import ProblemList from '../sidebar/ProblemList'
+import ApiKeyModal from '../modals/ApiKeyModal'
 
 export default function Sidebar({ open, onClose }) {
+  const [apiModalOpen, setApiModalOpen] = useState(false)
+  
   return (
     <>
       <div
@@ -38,10 +41,17 @@ export default function Sidebar({ open, onClose }) {
         </div>
         <div style={{position:'absolute', bottom:12, left:12, right:12}}>
           <button style={{display:'block', width:'100%', marginBottom:8}}>Change Working Directory</button>
-          <button style={{display:'block', width:'100%', marginBottom:8}}>API Keys</button>
+          <button 
+            style={{display:'block', width:'100%', marginBottom:8}}
+            onClick={() => setApiModalOpen(true)}
+          >
+            API Keys
+          </button>
           <button style={{display:'block', width:'100%', opacity:0.5}} disabled>Change User</button>
         </div>
       </div>
+      
+      <ApiKeyModal isOpen={apiModalOpen} onClose={() => setApiModalOpen(false)} />
     </>
   )
 }

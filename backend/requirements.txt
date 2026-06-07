@@ -2,3 +2,7 @@ fastapi
 uvicorn
 httpx
 aiofiles
+langgraph
+langchain-core
+langchain-openai
+openai

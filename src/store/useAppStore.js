@@ -24,6 +24,22 @@ const useAppStore = create((set) => ({
   toggleSidebar: () => set(s => ({ sidebarOpen: !s.sidebarOpen })),
   setProblemData: (d) => set({ problemData: d }),
   
+  setGrokApiKey: async (key) => {
+    set((state) => ({ apiKeys: { ...state.apiKeys, grok: key } }))
+    await window.electronAPI.settingsSet('apiKeys.grok', key)
+  },
+
+  initApiKeys: async () => {
+    try {
+      const savedGrok = await window.electronAPI.settingsGet('apiKeys.grok')
+      if (savedGrok) {
+        set((state) => ({ apiKeys: { ...state.apiKeys, grok: savedGrok } }))
+      }
+    } catch (e) {
+      console.error('Failed to init api keys:', e)
+    }
+  },
+  
   initWorkingDir: async () => {
     try {
       const saved = await window.electronAPI.settingsGet('workingDir')

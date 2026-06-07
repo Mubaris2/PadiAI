@@ -78,6 +78,7 @@ node_modules/
 coverage/
 coverage.*
 .tox/
+graphify-out/
 
 # Temporary CF/CFTOOL and other runtime dirs
 .tmp*
