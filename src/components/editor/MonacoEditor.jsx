@@ -20,6 +20,7 @@ export default function MonacoEditor() {
   const monaco = useMonaco()
   const code = useEditorStore(state => state.code)
   const setCode = useEditorStore(state => state.setCode)
+  const recordKeystroke = useEditorStore(state => state.recordKeystroke)
   const workingDir = useAppStore(state => state.workingDir)
   const selectedProblem = useAppStore(state => state.selectedProblem)
   const debounceRef = useRef(null)
@@ -42,6 +43,7 @@ export default function MonacoEditor() {
 
   const handleChange = (value) => {
     setCode(value)
+    recordKeystroke()
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       if (workingDir && selectedProblem) {

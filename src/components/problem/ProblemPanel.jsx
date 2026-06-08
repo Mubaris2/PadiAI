@@ -13,6 +13,7 @@ export default function ProblemPanel() {
   const [problemData, setProblemData] = useState(null)
   const [isParsing, setIsParsing] = useState(false)
   const setLimits = useEditorStore(s => s.setLimits)
+  const { startTracking, stopTracking, resetTime, activeTimeSeconds } = useEditorStore()
 
   const openExternal = async (url) => {
     if (window.electronAPI) {
@@ -26,8 +27,11 @@ export default function ProblemPanel() {
     if (!workingDir) return
     if (!selectedProblem) {
       setProblemData(null)
+      stopTracking()
       return
     }
+
+    startTracking()
 
     const loadProblem = async () => {
       const p = `${workingDir}/${selectedProblem}/problem.json`
@@ -59,13 +63,27 @@ export default function ProblemPanel() {
         return
       }
 
+      // Mark attempted
+      if (!parsed.attemptedSession) {
+        try {
+          await fetch('http://localhost:8765/agent/mark-attempted', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir })
+          })
+          parsed.attemptedSession = true
+        } catch (e) {
+          console.warn('Failed to mark attempted', e)
+        }
+      }
+
       if (parsed.statementPlaceholder === true || !parsed.llmSummary) {
         setIsParsing(true)
         try {
           const apiRes = await fetch('http://localhost:8765/agent/parse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ problemId: selectedProblem })
+            body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir })
           })
           if (apiRes.ok) {
             const reloadRes = await window.electronAPI.readFile(p)
@@ -99,7 +117,42 @@ export default function ProblemPanel() {
     }
 
     loadProblem()
+
+    return () => {
+      // Send tracked time on unmount or problem switch
+      if (activeTimeSeconds > 0) {
+        fetch('http://localhost:8765/agent/track-time', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir, seconds: useEditorStore.getState().activeTimeSeconds })
+        }).catch(console.warn)
+      }
+      stopTracking()
+      resetTime()
+    }
   }, [workingDir, selectedProblem, setLimits])
+
+  const handleMarkSolved = async () => {
+    try {
+      await fetch('http://localhost:8765/agent/track-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir, seconds: activeTimeSeconds })
+      })
+      await fetch('http://localhost:8765/agent/mark-solved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir })
+      })
+      setProblemData(prev => ({...prev, solvedAt: Date.now()}))
+      resetTime()
+      startTracking()
+    } catch (e) {
+      console.warn('Failed to mark solved', e)
+    }
+  }
+
+  const isSolved = !!problemData?.solvedAt
 
   const renderPlaceholder = () => (
     <div className="placeholder-content">
@@ -123,6 +176,15 @@ export default function ProblemPanel() {
     <div className="problem-panel">
       {problemData?.statementPlaceholder ? (
         <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px' }}>
+            <button
+              className="primary"
+              onClick={handleMarkSolved}
+              disabled={isSolved}
+            >
+              {isSolved ? "✓ Solved" : "Mark Solved"}
+            </button>
+          </div>
           <ProblemSection 
             title={
               <div style={{display:'flex', alignItems:'center'}}>
@@ -148,6 +210,15 @@ export default function ProblemPanel() {
         </>
       ) : (
         <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px' }}>
+            <button
+              className="primary"
+              onClick={handleMarkSolved}
+              disabled={isSolved}
+            >
+              {isSolved ? "✓ Solved" : "Mark Solved"}
+            </button>
+          </div>
           <ProblemSection 
             title={
               <div style={{display:'flex', alignItems:'center'}}>

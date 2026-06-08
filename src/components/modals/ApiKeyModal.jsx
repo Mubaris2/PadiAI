@@ -32,10 +32,10 @@ export default function ApiKeyModal({ isOpen, onClose }) {
 
         <div className="modal-body">
           <div className="input-group">
-            <label>Grok API Key</label>
+            <label>Grok / Groq API Key</label>
             <input
               type="password"
-              placeholder="xai-..."
+              placeholder="xai-... or gsk_..."
               value={grokKey}
               onChange={e => setGrokKey(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
