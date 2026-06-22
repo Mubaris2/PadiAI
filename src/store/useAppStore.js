@@ -8,6 +8,15 @@ const useAppStore = create((set) => ({
   problemData: null,
   problemList: [],
   backendReady: false,
+  toasts: [],
+  
+  addToast: (message, type = 'error') => set(s => ({
+    toasts: [...s.toasts, { id: Date.now(), message, type }]
+  })),
+  
+  removeToast: (id) => set(s => ({
+    toasts: s.toasts.filter(t => t.id !== id)
+  })),
   
   setWorkingDir: async (dir) => {
     set({ workingDir: dir })

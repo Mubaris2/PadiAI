@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import DOMPurify from 'dompurify'
 import useAppStore from '../../store/useAppStore'
+import { useScraping } from '../../context/ScrapingContext'
 import './ProblemPickerModal.css'
 
 export default function ProblemPickerModal({ isOpen, onClose }) {
@@ -15,12 +16,18 @@ export default function ProblemPickerModal({ isOpen, onClose }) {
   const workingDir = useAppStore(s => s.workingDir)
   const setProblemList = useAppStore(s => s.setProblemList)
   const setSelectedProblem = useAppStore(s => s.setSelectedProblem)
+  const { scrapeQueue } = useScraping()
   const BACKEND_URL = 'http://127.0.0.1:8765'
 
   const parseCode = (input) => {
     const cleaned = input.replace(/\s/g, '').toUpperCase()
     const match = cleaned.match(/^(\d+)([A-Z]+\d?)$/)
     return match ? { contestId: parseInt(match[1]), index: match[2] } : null
+  }
+
+  const parseIdParts = (id) => {
+    const match = id.match(/^(\d+)([A-Z]+\d?)$/);
+    return match ? [parseInt(match[1]), match[2]] : [null, null];
   }
 
   const parseUrl = (url) => {
@@ -113,6 +120,12 @@ export default function ProblemPickerModal({ isOpen, onClose }) {
       if (data.imported && data.imported.length > 0) {
         const folderName = data.imported[0]
         setSelectedProblem(folderName)
+        
+        const queue = data.imported.map(id => {
+          const [contestId, index] = parseIdParts(id);
+          return { problemId: id, contestId, index };
+        });
+        scrapeQueue(queue);
       }
 
       onClose()

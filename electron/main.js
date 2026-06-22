@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const os = require('os')
 const Store = require('electron-store')
+require('./ipc/scraper')
 
 function writePadiConfig(data) {
   const configDir = path.join(os.homedir(), '.padiai');
@@ -125,10 +126,12 @@ function createWindow() {
 
   const devUrl = process.env.VITE_DEV_SERVER_URL || (!app.isPackaged ? 'http://localhost:5173' : null)
   if (devUrl) {
-    win.loadURL(devUrl)
+    win.loadURL(devUrl); win.webContents.on('console-message', (e, level, msg, line, sourceId) => { if (level >= 2) require('fs').appendFileSync('error.log', `[CONSOLE ERROR] ${msg}
+`); });
     win.webContents.openDevTools()
   } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html')); win.webContents.on('console-message', (e, level, msg, line, sourceId) => { if (level >= 2) require('fs').appendFileSync('error.log', `[CONSOLE ERROR] ${msg}
+`); });
   }
 }
 

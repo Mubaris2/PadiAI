@@ -28,5 +28,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   settingsGet: (key) => invoke('settings:get', key),
   settingsSet: (key, value) => invoke('settings:set', key, value),
   openExternal: (url) => invoke('shell:openExternal', url),
+  fetchProblem: (contestId, index) => invoke('scraper:fetchProblem', { contestId, index }),
 })
 

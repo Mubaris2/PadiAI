@@ -1,9 +1,11 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pathlib import Path
 import json
 from datetime import datetime
 from agents.graph import compiled_graph
+from agents.statement_parser import statement_parser_node
 from agents.state import AgentState
 from config import get_working_dir, get_grok_key
 from db_helpers import get_all_stats, upsert_stat
@@ -13,6 +15,7 @@ router = APIRouter()
 class ParseRequest(BaseModel):
     problemId: str
     workingDir: str
+    rawHtml: str | None = None
 
 @router.post("/parse")
 async def parse_problem(req: ParseRequest):
@@ -25,6 +28,10 @@ async def parse_problem(req: ParseRequest):
         raise HTTPException(status_code=404, detail="problem.json not found")
     
     problem_json = json.loads(problem_path.read_text())
+    
+    if req.rawHtml:
+        problem_json["rawHtml"] = req.rawHtml
+
     api_key = get_grok_key()
     if not api_key:
         raise HTTPException(status_code=400, detail="Grok API key not configured")
@@ -44,12 +51,15 @@ async def parse_problem(req: ParseRequest):
         "workingDir": working_dir,
     }
     
-    result = await compiled_graph.ainvoke(initial_state)
+    # Call statement_parser_node directly since it's a standalone task
+    # (running through compiled_graph always triggers the supervisor entry point)
+    result = statement_parser_node(initial_state)
     
     return {
         "success": True,
         "problemId": req.problemId,
-        "llmSummary": result["llmSummary"],
+        "llmSummary": result.get("llmSummary", ""),
+        "problemJson": result.get("problemJson", {}),
     }
 
 class ChatRequest(BaseModel):

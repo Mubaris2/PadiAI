@@ -1,6 +1,42 @@
 import React from 'react'
 import useAppStore from '../../store/useAppStore'
+import { useScraping } from '../../context/ScrapingContext'
 import './ProblemList.css'
+
+function parseIdParts(id) {
+  const match = id.match(/^(\d+)([A-Z]+\d?)$/);
+  return match ? [parseInt(match[1]), match[2]] : [null, null];
+}
+
+function ScrapeStatusDot({ status }) {
+  if (!status || status === 'ready') return null;
+
+  const config = {
+    pending:  { color: '#64748b', label: 'Queued',    pulse: false },
+    fetching: { color: '#38bdf8', label: 'Fetching',  pulse: true  },
+    parsing:  { color: '#818cf8', label: 'Parsing',   pulse: true  },
+    failed:   { color: '#f87171', label: 'Failed',    pulse: false },
+  };
+
+  const c = config[status];
+  if (!c) return null;
+
+  return (
+    <span
+      title={c.label}
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: '50%',
+        background: c.color,
+        flexShrink: 0,
+        animation: c.pulse ? 'pulse-glow 1.4s ease-in-out infinite' : 'none',
+        display: 'inline-block',
+        marginRight: 6,
+      }}
+    />
+  );
+}
 
 export default function ProblemList() {
   const workingDir = useAppStore(s => s.workingDir)
@@ -8,6 +44,7 @@ export default function ProblemList() {
   const problemList = useAppStore(s => s.problemList)
   const selectedProblem = useAppStore(s => s.selectedProblem)
   const setSelectedProblem = useAppStore(s => s.setSelectedProblem)
+  const { scrapeStatuses, retryOne } = useScraping()
 
   const handleOpenDir = async () => {
     try {
@@ -52,7 +89,10 @@ export default function ProblemList() {
             className={`problem-item ${selectedProblem === problem.folder ? 'active' : ''}`}
             onClick={() => setSelectedProblem(problem.folder)}
           >
-            <div className="problem-id">{problem.id}</div>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <ScrapeStatusDot status={scrapeStatuses[problem.id]} />
+              <div className="problem-id">{problem.id}</div>
+            </div>
             <div className="problem-content">
               <div className="problem-title">{problem.title}</div>
               {problem.rating && (
@@ -68,6 +108,20 @@ export default function ProblemList() {
                   <span className="tag-more">+{problem.tags.length - 2}</span>
                 )}
               </div>
+            )}
+            {scrapeStatuses[problem.id] === 'failed' && (
+              <button
+                className="link-button"
+                title="Retry fetch"
+                style={{marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#f87171'}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const [contestId, index] = parseIdParts(problem.id);
+                  retryOne(problem.id, contestId, index);
+                }}
+              >
+                ↺
+              </button>
             )}
           </div>
         ))}

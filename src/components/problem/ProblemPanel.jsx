@@ -5,15 +5,24 @@ import ProblemSection from './ProblemSection'
 import useAppStore from '../../store/useAppStore'
 import useEditorStore from '../../store/useEditorStore'
 import { parseConstraints } from '../../utils/parseConstraints'
+import { useScraping } from '../../context/ScrapingContext'
 import './ProblemPanel.css'
+
+function parseIdParts(id) {
+  const match = id.match(/^(\d+)([A-Z]+\d?)$/);
+  return match ? [parseInt(match[1]), match[2]] : [null, null];
+}
 
 export default function ProblemPanel() {
   const workingDir = useAppStore(s => s.workingDir)
   const selectedProblem = useAppStore(s => s.selectedProblem)
-  const [problemData, setProblemData] = useState(null)
+  const problemData = useAppStore(s => s.problemData)
+  const setProblemData = useAppStore(s => s.setProblemData)
   const [isParsing, setIsParsing] = useState(false)
   const setLimits = useEditorStore(s => s.setLimits)
   const { startTracking, stopTracking, resetTime, activeTimeSeconds } = useEditorStore()
+  const { scrapeStatuses, retryOne } = useScraping()
+  const scrapeStatus = scrapeStatuses[selectedProblem]
 
   const openExternal = async (url) => {
     if (window.electronAPI) {
@@ -77,7 +86,7 @@ export default function ProblemPanel() {
         }
       }
 
-      if (parsed.statementPlaceholder === true || !parsed.llmSummary) {
+      if (parsed.statementPlaceholder === false && !parsed.llmSummary) {
         setIsParsing(true)
         try {
           const apiRes = await fetch('http://localhost:8765/agent/parse', {
@@ -86,9 +95,17 @@ export default function ProblemPanel() {
             body: JSON.stringify({ problemId: selectedProblem, workingDir: workingDir })
           })
           if (apiRes.ok) {
-            const reloadRes = await window.electronAPI.readFile(p)
-            if (reloadRes.ok) {
-              const reloaded = JSON.parse(reloadRes.content)
+            const apiData = await apiRes.json()
+            let reloaded
+            if (apiData.problemJson && Object.keys(apiData.problemJson).length > 0) {
+              reloaded = apiData.problemJson
+            } else {
+              const reloadRes = await window.electronAPI.readFile(p)
+              if (reloadRes.ok) {
+                reloaded = JSON.parse(reloadRes.content)
+              }
+            }
+            if (reloaded) {
               ;['statement','constraints','others'].forEach(k => {
                 if (typeof reloaded[k] === 'string') reloaded[k] = DOMPurify.sanitize(reloaded[k])
               })
@@ -174,6 +191,37 @@ export default function ProblemPanel() {
 
   return (
     <div className="problem-panel">
+      {(problemData?.statementPlaceholder || scrapeStatus === 'failed') && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: 8,
+          margin: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 12,
+        }}>
+          <span style={{ color: '#fca5a5' }}>
+            {scrapeStatus === 'fetching' || scrapeStatus === 'parsing'
+              ? 'Fetching statement...'
+              : 'Statement not available.'}
+          </span>
+          {(scrapeStatus === 'failed' || problemData?.statementPlaceholder) &&
+           scrapeStatus !== 'fetching' && scrapeStatus !== 'parsing' && (
+            <button
+              className="link-button"
+              onClick={() => {
+                const [contestId, index] = parseIdParts(selectedProblem);
+                retryOne(selectedProblem, contestId, index);
+              }}
+            >
+              Retry Fetch ↺
+            </button>
+          )}
+        </div>
+      )}
       {problemData?.statementPlaceholder ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px' }}>
@@ -189,7 +237,7 @@ export default function ProblemPanel() {
             title={
               <div style={{display:'flex', alignItems:'center'}}>
                 Statement
-                {isParsing && <span className="analysis-badge">Analyzing...</span>}
+                {(isParsing || scrapeStatus === 'fetching' || scrapeStatus === 'parsing') && <span className="analysis-badge">Analyzing...</span>}
               </div>
             } 
             defaultOpen={true}
@@ -223,7 +271,7 @@ export default function ProblemPanel() {
             title={
               <div style={{display:'flex', alignItems:'center'}}>
                 Statement
-                {isParsing && <span className="analysis-badge">Analyzing...</span>}
+                {(isParsing || scrapeStatus === 'fetching' || scrapeStatus === 'parsing') && <span className="analysis-badge">Analyzing...</span>}
               </div>
             } 
             defaultOpen={true}
